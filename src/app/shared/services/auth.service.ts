@@ -1,51 +1,24 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
+  BASE_URL,
   FIREBASE_SIGN_IN_URL,
   FIREBASE_SIGN_UP_URL,
+  USER_ENDPOINT,
 } from '../constants/firebase';
 import { AuthResponse } from '../Model/auth/AuthResponse';
 import { User } from '../Model/user/User';
-import { map, Observable, Subject, switchMap, tap } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs';
 import { Type } from '../Model/user/Type';
+import { ProfileService } from './profile.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // Api URL and local storage tokens
-  private URL =
-    'https://fir-rbac-demo-default-rtdb.asia-southeast1.firebasedatabase.app';
-  private USER_DATA_TOKEN = 'USER_DATA';
-
-  // User Subject which will transfer state data to all the required places
-  private user: User | undefined = undefined;
-  private userSubject = new Subject<User | undefined>();
-
   // Injecting the required dependencies
-  constructor(private http: HttpClient) {}
-
-  // This function returns the current user data
-  getUser(): User | undefined {
-    return this.user ? { ...this.user } : undefined;
-  }
-
-  // This function returns the current User Observable
-  getUserSubject(): Observable<User | undefined> {
-    return this.userSubject.asObservable();
-  }
-
-  // This function returns the current stored user in the local storage
-  getUserFromLocal(): User | undefined {
-    const data = localStorage.getItem(this.USER_DATA_TOKEN);
-    return data ? JSON.parse(data) : undefined;
-  }
-
-  // This function stores the user data to the local storage
-  setUserInLocal(user: User): void {
-    this.user = user;
-    this.userSubject.next(this.getUser());
-
-    localStorage.setItem(this.USER_DATA_TOKEN, JSON.stringify(user));
-  }
+  constructor(
+    private http: HttpClient,
+    private profileService: ProfileService
+  ) {}
 
   // This function registers the user and stores the user data in the firebase realtime database
   registerUser(user: { name: string; email: string; password: string }) {
@@ -55,22 +28,27 @@ export class AuthService {
         returnSecureToken: true,
       })
       .pipe(
-        switchMap((response) => {
-          const userId = response.localId;
-          const token = response.idToken;
-
-          // Calling the API to store the user data in the realtime database
-          return this.http.put(
-            `${this.URL}/users/${userId}.json?auth=${token}`,
-            {
-              id: userId,
-              name: user.name,
-              email: user.email,
-              type: Type.LIBRARIAN,
-            }
-          );
-        })
+        switchMap((response) =>
+          this.storeUserData(response, user.name, Type.LIBRARIAN)
+        )
       );
+  }
+
+  // This function stores the user data to the firebase realtime database
+  storeUserData(authResponse: AuthResponse, name: string, type: Type) {
+    const userId = authResponse.localId;
+    const token = authResponse.idToken;
+
+    // Calling the API to store the data
+    return this.http.put(
+      `${BASE_URL}/${USER_ENDPOINT}/${userId}.json?auth=${token}`,
+      {
+        id: userId,
+        name: name,
+        email: authResponse.email,
+        type: type,
+      }
+    );
   }
 
   // This function logs in the user
@@ -80,20 +58,21 @@ export class AuthService {
         ...user,
         returnSecureToken: true,
       })
-      .pipe(
-        switchMap((response) => {
-          const userId = response.localId;
-          const token = response.idToken;
+      .pipe(switchMap((response) => this.fetchUserData(response)));
+  }
 
-          return this.http
-            .get(`${this.URL}/users/${userId}.json?auth=${token}`)
-            .pipe(
-              map((userRes) =>
-                User.fromJson(userRes, response.idToken, response.refreshToken)
-              ),
-              tap((user: User) => this.setUserInLocal(user))
-            );
-        })
+  // This function fetches the logged in user details from the firebase realtime database
+  fetchUserData(authResponse: AuthResponse) {
+    const userId = authResponse.localId;
+    const token = authResponse.idToken;
+
+    return this.http
+      .get<User>(`${BASE_URL}/${USER_ENDPOINT}/${userId}.json?auth=${token}`)
+      .pipe(
+        map((user) => {
+          return { ...user, token, refreshToken: authResponse.refreshToken };
+        }),
+        tap((user: User) => this.profileService.setUserInLocal(user))
       );
   }
 }

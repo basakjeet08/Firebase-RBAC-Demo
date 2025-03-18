@@ -10,15 +10,4 @@ export class User {
     readonly token: string,
     readonly refreshToken: string
   ) {}
-
-  static fromJson(json: any, token: string, refreshToken: string): User {
-    return new User(
-      json.name,
-      json.id,
-      json.email,
-      json.type,
-      token,
-      refreshToken
-    );
-  }
 }

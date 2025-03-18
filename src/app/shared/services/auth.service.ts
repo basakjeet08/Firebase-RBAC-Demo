@@ -6,7 +6,7 @@ import {
 } from '../constants/firebase';
 import { AuthResponse } from '../Model/auth/AuthResponse';
 import { User } from '../Model/user/User';
-import { Observable, Subject, switchMap } from 'rxjs';
+import { map, Observable, Subject, switchMap, tap } from 'rxjs';
 import { Type } from '../Model/user/Type';
 
 @Injectable({ providedIn: 'root' })
@@ -75,9 +75,25 @@ export class AuthService {
 
   // This function logs in the user
   loginUser(user: { email: string; password: string }) {
-    return this.http.post<AuthResponse>(FIREBASE_SIGN_IN_URL, {
-      ...user,
-      returnSecureToken: true,
-    });
+    return this.http
+      .post<AuthResponse>(FIREBASE_SIGN_IN_URL, {
+        ...user,
+        returnSecureToken: true,
+      })
+      .pipe(
+        switchMap((response) => {
+          const userId = response.localId;
+          const token = response.idToken;
+
+          return this.http
+            .get(`${this.URL}/users/${userId}.json?auth=${token}`)
+            .pipe(
+              map((userRes) =>
+                User.fromJson(userRes, response.idToken, response.refreshToken)
+              ),
+              tap((user: User) => this.setUserInLocal(user))
+            );
+        })
+      );
   }
 }

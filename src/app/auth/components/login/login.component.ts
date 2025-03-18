@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { User } from 'src/app/shared/Model/user/User';
 import { AuthService } from 'src/app/shared/services/auth.service';
 
 @Component({
@@ -30,9 +31,11 @@ export class LoginComponent {
     // Calling the API
     this.authService.loginUser(this.userInput).subscribe({
       // Success State
-      next: (data) => {
+      next: (user: User) => {
         this.isLoading = false;
-        console.log(data);
+        const userRole = user.type.toLowerCase();
+
+        this.router.navigate(['../../', userRole], { relativeTo: this.route });
       },
 
       // Error State

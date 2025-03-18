@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from 'src/app/shared/services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -15,11 +16,31 @@ export class RegisterComponent {
   errorMessage: string | null = null;
 
   // Injecting the necessary dependencies
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   // This function is invoked when the user clicks on the submit button
   onSubmitClick() {
-    console.log(this.userInput);
+    // Setting the loading state
+    this.isLoading = true;
+
+    // Calling the API
+    this.authService.registerUser(this.userInput).subscribe({
+      // Success State
+      next: () => {
+        this.isLoading = false;
+        this.router.navigate(['../', 'login'], { relativeTo: this.route });
+      },
+
+      // Error State
+      error: (error: Error) => {
+        this.isLoading = false;
+        this.errorMessage = error.message;
+      },
+    });
   }
 
   // This function is invoked when the user clicks on the go to login button

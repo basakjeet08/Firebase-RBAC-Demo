@@ -1,8 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ErrorCardComponent } from './components/error-card/error-card.component';
+import { LoaderComponent } from './components/loader/loader.component';
 
 @NgModule({
-  declarations: [],
+  declarations: [ErrorCardComponent, LoaderComponent],
   imports: [CommonModule],
+  exports: [ErrorCardComponent, LoaderComponent],
 })
 export class SharedModule {}

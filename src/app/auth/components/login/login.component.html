@@ -1,0 +1,74 @@
+<!-- Loading State -->
+<app-loader *ngIf="isLoading" [isLoading]="isLoading" />
+
+<!-- Error State -->
+<app-error-card
+  *ngIf="errorMessage"
+  [errorMessage]="errorMessage"
+  (onCancelClick)="onErrorCancelClick()"
+/>
+
+<!-- Idle State -->
+<form
+  class="card-container col-container form-container"
+  *ngIf="!isLoading && !errorMessage"
+  #formContainer="ngForm"
+  (ngSubmit)="onSubmitClick()"
+>
+  <h2>Login User</h2>
+
+  <!-- Email Container -->
+  <div class="col-container">
+    <!-- Input Container -->
+    <input
+      type="email"
+      name="email"
+      placeholder="Enter your Email"
+      required
+      email
+      [(ngModel)]="userInput.email"
+      #email="ngModel"
+    />
+
+    <!-- Error Text for this container -->
+    <p class="error-text" *ngIf="email.touched && email.invalid">
+      Please Provide a valid email !
+    </p>
+  </div>
+
+  <!-- Password Container -->
+  <div class="col-container">
+    <!-- Input Container -->
+    <input
+      type="password"
+      name="password"
+      placeholder="Enter your Password"
+      required
+      minlength="5"
+      [(ngModel)]="userInput.password"
+      #password="ngModel"
+    />
+
+    <!-- Error Text for this container -->
+    <p class="error-text" *ngIf="password.touched && password.invalid">
+      Please Provide a valid Password, greater than 5
+    </p>
+  </div>
+
+  <!-- Button Container -->
+  <div class="row-container">
+    <!-- Submit Button -->
+    <button class="flex" type="submit" [disabled]="formContainer.invalid">
+      Login
+    </button>
+
+    <!-- Cancel Button -->
+    <button
+      class="destructive-btn flex"
+      type="button"
+      (click)="onGoToRegisterPageClick()"
+    >
+      Go to Register Page
+    </button>
+  </div>
+</form>

@@ -5,3 +5,4 @@ export const BASE_URL =
   'https://fir-rbac-demo-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 export const USER_ENDPOINT = '/users';
+export const BOOK_ENDPOINT = '/books.json'

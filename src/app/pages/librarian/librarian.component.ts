@@ -25,7 +25,22 @@ export class LibrarianComponent implements OnInit {
   fetchBooks() {
     this.bookService.fetchBook().subscribe({
       // Success State
+      next: (data) => {
+        console.log(data);
+        this.fetchBookById(data[0].id);
+      },
+
+      // Error State
+      error: (error) => console.log(error),
+    });
+  }
+
+  // This function fetches book by id
+  fetchBookById(id: string) {
+    this.bookService.fetchBookById(id).subscribe({
+      // Success State
       next: (data) => console.log(data),
+
       // Error State
       error: (error) => console.log(error),
     });

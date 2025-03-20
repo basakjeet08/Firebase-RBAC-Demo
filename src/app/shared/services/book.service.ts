@@ -4,6 +4,10 @@ import { ProfileService } from './profile.service';
 import { BASE_URL, BOOK_ENDPOINT } from '../constants/firebase';
 import { Book } from '../Model/books/Book';
 import { map } from 'rxjs';
+import {
+  mapFirebaseObjectResponse,
+  mapFirebaseListResponse,
+} from '../utils/firebase-response-mapper';
 
 @Injectable({ providedIn: 'root' })
 export class BookService {
@@ -32,7 +36,7 @@ export class BookService {
   // This function creates a book
   createBook() {
     return this.http.post(
-      this.url,
+      `${this.url}.json`,
       {
         title: 'Dummy Book Title',
         description: 'Dummy Book Description',
@@ -44,15 +48,15 @@ export class BookService {
 
   // This function fetches all the books from the realtime database
   fetchBook() {
-    return this.http.get<{ [key: string]: Book }>(this.url).pipe(
-      map((response) => {
-        if (!response) return [];
+    return this.http
+      .get<{ [key: string]: Book }>(`${this.url}.json`)
+      .pipe(map((response) => mapFirebaseListResponse(response)));
+  }
 
-        return Object.keys(response).map((key) => ({
-          ...response[key],
-          id: key,
-        }));
-      })
-    );
+  // This function fetches the book by its id
+  fetchBookById(id: string) {
+    return this.http
+      .get<Book | null>(`${this.url}/${id}.json`)
+      .pipe(map((response) => mapFirebaseObjectResponse(response, id)));
   }
 }
